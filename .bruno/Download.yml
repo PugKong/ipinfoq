@@ -1,0 +1,17 @@
+info:
+  name: Download
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: https://ipinfo.io/data/ipinfo_lite.json.gz
+  auth:
+    type: bearer
+    token: "{{TOKEN}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

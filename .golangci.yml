@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://golangci-lint.run/jsonschema/golangci.jsonschema.json
+version: "2"
+linters:
+  default: all
+  disable:
+    - cyclop
+    - depguard
+    - err113
+    - exhaustruct
+    - funlen
+    - maintidx
+    - mnd
+    - noctx
+    - noinlineerr
+    - paralleltest
+    - tagliatelle
+    - varnamelen
+    - wsl
+    - wsl_v5
+  settings:
+    revive:
+      enable-default-rules: true
+      rules:
+        - { name: package-comments, disabled: true }
+    gosec:
+      excludes: [G304]

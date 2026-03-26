@@ -1,0 +1,5 @@
+name: Local
+color: "#8D44B2"
+variables:
+  - secret: true
+    name: TOKEN

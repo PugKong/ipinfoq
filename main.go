@@ -44,17 +44,17 @@ func NewEnv() *Env {
 	}
 }
 
-func Run(runtime *Env) int {
+func Run(env *Env) int {
 	cmd := &cobra.Command{
 		Use:   appName,
 		Short: "A CLI tool to download and query ipinfo.io lite dataset",
 	}
 
-	cmd.SetArgs(runtime.Args)
-	cmd.SetOut(runtime.Out)
-	cmd.SetErr(runtime.Err)
+	cmd.SetArgs(env.Args)
+	cmd.SetOut(env.Out)
+	cmd.SetErr(env.Err)
 
-	datasetService := NewDatasetService(runtime.URL, filepath.Join(runtime.CacheDir, appName))
+	datasetService := NewDatasetService(env.URL, filepath.Join(env.CacheDir, appName))
 
 	cmd.AddCommand(
 		NewDownloadCommand(datasetService),

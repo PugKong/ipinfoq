@@ -98,19 +98,27 @@ Examples:
 
 
 Flags:
-      --asn strings              filter by ASNs
-  -i, --case-insensitive         case insensitive search
-  -c, --contains                 substring matching
-      --continent strings        filter by continents
-      --continent-code strings   filter by continent codes
-      --country strings          filter by countries
-      --country-code strings     filter by country codes
-  -d, --domain strings           filter by organization domains
-  -f, --format string            output format (jsonl, template) (default "jsonl")
-  -h, --help                     help for query
-      --ip ipSlice               filter by IP addresses (default [])
-  -n, --name strings             filter by organization names
-  -t, --template string          go text/template in case of "template" format
+      --asn strings                      include ASNs
+  -i, --case-insensitive                 case insensitive search
+  -c, --contains                         substring matching
+      --continent strings                include continents
+      --continent-code strings           include continent codes
+      --country strings                  include countries
+      --country-code strings             include country codes
+  -d, --domain strings                   include organization domains
+      --exclude-asn strings              exclude ASNs
+      --exclude-continent strings        exclude continents
+      --exclude-continent-code strings   exclude continent codes
+      --exclude-country strings          exclude countries
+      --exclude-country-code strings     exclude country codes
+  -D, --exclude-domain strings           exclude organization domains
+      --exclude-ip ipSlice               exclude IPs (default [])
+  -N, --exclude-name strings             exclude organization names
+  -f, --format string                    output format (jsonl, template) (default "jsonl")
+  -h, --help                             help for query
+      --ip ipSlice                       include IPs (default [])
+  -n, --name strings                     include organization names
+  -t, --template string                  go text/template in case of "template" format
 ```
 
 ## Contributing

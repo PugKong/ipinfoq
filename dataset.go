@@ -138,6 +138,15 @@ type QueryOptions struct {
 	ASNs           []string
 	Names          []string
 	Domains        []string
+
+	ExcludeIPs            []net.IP
+	ExcludeCountries      []string
+	ExcludeCountryCodes   []string
+	ExcludeContinents     []string
+	ExcludeContinentCodes []string
+	ExcludeASNs           []string
+	ExcludeNames          []string
+	ExcludeDomains        []string
 }
 
 func (d *DatasetService) Query(options QueryOptions) iter.Seq2[Record, error] {
@@ -172,6 +181,14 @@ func (d *DatasetService) Query(options QueryOptions) iter.Seq2[Record, error] {
 			lower(options.ASNs)
 			lower(options.Names)
 			lower(options.Domains)
+
+			lower(options.ExcludeCountries)
+			lower(options.ExcludeCountryCodes)
+			lower(options.ExcludeContinents)
+			lower(options.ExcludeContinentCodes)
+			lower(options.ExcludeASNs)
+			lower(options.ExcludeNames)
+			lower(options.ExcludeDomains)
 		}
 
 		for record, err := range reader.All() {
@@ -200,12 +217,13 @@ func (d *DatasetService) Query(options QueryOptions) iter.Seq2[Record, error] {
 }
 
 func match(options QueryOptions, record Record, network *net.IPNet) bool {
-	if len(options.IPs) > 0 {
-		contains := func(ip net.IP) bool { return network.Contains(ip) }
+	compareNetwork := func(ip net.IP) bool { return network.Contains(ip) }
+	if len(options.IPs) > 0 && !slices.ContainsFunc(options.IPs, compareNetwork) {
+		return false
+	}
 
-		if !slices.ContainsFunc(options.IPs, contains) {
-			return false
-		}
+	if len(options.ExcludeIPs) > 0 && slices.ContainsFunc(options.ExcludeIPs, compareNetwork) {
+		return false
 	}
 
 	compare := func(str string) func(string) bool {
@@ -223,11 +241,11 @@ func match(options QueryOptions, record Record, network *net.IPNet) bool {
 	}
 
 	in := func(needle string, haystack []string) bool {
-		if len(haystack) == 0 {
-			return true
-		}
+		return len(haystack) == 0 || slices.ContainsFunc(haystack, compare(needle))
+	}
 
-		return slices.ContainsFunc(haystack, compare(needle))
+	notIn := func(needle string, haystack []string) bool {
+		return len(haystack) == 0 || !slices.ContainsFunc(haystack, compare(needle))
 	}
 
 	return in(record.Country, options.Countries) &&
@@ -236,5 +254,12 @@ func match(options QueryOptions, record Record, network *net.IPNet) bool {
 		in(record.ContinentCode, options.ContinentCodes) &&
 		in(record.ASN, options.ASNs) &&
 		in(record.Name, options.Names) &&
-		in(record.Domain, options.Domains)
+		in(record.Domain, options.Domains) &&
+		notIn(record.Country, options.ExcludeCountries) &&
+		notIn(record.CountryCode, options.ExcludeCountryCodes) &&
+		notIn(record.Continent, options.ExcludeContinents) &&
+		notIn(record.ContinentCode, options.ExcludeContinentCodes) &&
+		notIn(record.ASN, options.ExcludeASNs) &&
+		notIn(record.Name, options.ExcludeNames) &&
+		notIn(record.Domain, options.ExcludeDomains)
 }

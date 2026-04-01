@@ -115,6 +115,15 @@ func NewQueryCommand(service *DatasetService) *cobra.Command {
 		ASNs           []string
 		Names          []string
 		Domains        []string
+
+		ExcludeIPs            []net.IP
+		ExcludeCountries      []string
+		ExcludeCountryCodes   []string
+		ExcludeContinents     []string
+		ExcludeContinentCodes []string
+		ExcludeASNs           []string
+		ExcludeNames          []string
+		ExcludeDomains        []string
 	}
 
 	cmd := &cobra.Command{
@@ -149,7 +158,7 @@ When using --template, the following fields are available:
 `,
 		Example: `  - Search information about a company by its name
     ipinfoq query -ci -n "telegram" | jq
-  - Generate an ipset config to block Telegram by domain (if your government insists)
+  - Generate an ipset config to block Telegram by domain
     ipinfoq query -f template -t '{{ printf "add block_net_set %s\\n" .Network }}' -d "telegram.org" > telegram.conf
   - Inspect domain data using dig
     ipinfoq query --ip "$(dig +short telegram.org | paste -sd, -)"
@@ -165,14 +174,23 @@ When using --template, the following fields are available:
 	flags.BoolVarP(&options.Contains, "contains", "c", false, "substring matching")
 	flags.BoolVarP(&options.CaseInsensitive, "case-insensitive", "i", false, "case insensitive search")
 
-	flags.IPSliceVar(&options.IPs, "ip", []net.IP{}, "filter by IP addresses")
-	flags.StringSliceVar(&options.Countries, "country", []string{}, "filter by countries")
-	flags.StringSliceVar(&options.CountryCodes, "country-code", []string{}, "filter by country codes")
-	flags.StringSliceVar(&options.Continents, "continent", []string{}, "filter by continents")
-	flags.StringSliceVar(&options.ContinentCodes, "continent-code", []string{}, "filter by continent codes")
-	flags.StringSliceVar(&options.ASNs, "asn", []string{}, "filter by ASNs")
-	flags.StringSliceVarP(&options.Names, "name", "n", []string{}, "filter by organization names")
-	flags.StringSliceVarP(&options.Domains, "domain", "d", []string{}, "filter by organization domains")
+	flags.IPSliceVar(&options.IPs, "ip", []net.IP{}, "include IPs")
+	flags.StringSliceVar(&options.Countries, "country", []string{}, "include countries")
+	flags.StringSliceVar(&options.CountryCodes, "country-code", []string{}, "include country codes")
+	flags.StringSliceVar(&options.Continents, "continent", []string{}, "include continents")
+	flags.StringSliceVar(&options.ContinentCodes, "continent-code", []string{}, "include continent codes")
+	flags.StringSliceVar(&options.ASNs, "asn", []string{}, "include ASNs")
+	flags.StringSliceVarP(&options.Names, "name", "n", []string{}, "include organization names")
+	flags.StringSliceVarP(&options.Domains, "domain", "d", []string{}, "include organization domains")
+
+	flags.IPSliceVar(&options.ExcludeIPs, "exclude-ip", []net.IP{}, "exclude IPs")
+	flags.StringSliceVar(&options.ExcludeCountries, "exclude-country", []string{}, "exclude countries")
+	flags.StringSliceVar(&options.ExcludeCountryCodes, "exclude-country-code", []string{}, "exclude country codes")
+	flags.StringSliceVar(&options.ExcludeContinents, "exclude-continent", []string{}, "exclude continents")
+	flags.StringSliceVar(&options.ExcludeContinentCodes, "exclude-continent-code", []string{}, "exclude continent codes")
+	flags.StringSliceVar(&options.ExcludeASNs, "exclude-asn", []string{}, "exclude ASNs")
+	flags.StringSliceVarP(&options.ExcludeNames, "exclude-name", "N", []string{}, "exclude organization names")
+	flags.StringSliceVarP(&options.ExcludeDomains, "exclude-domain", "D", []string{}, "exclude organization domains")
 
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error {
 		queryOptions := QueryOptions{
@@ -187,6 +205,15 @@ When using --template, the following fields are available:
 			ASNs:           options.ASNs,
 			Names:          options.Names,
 			Domains:        options.Domains,
+
+			ExcludeIPs:            options.ExcludeIPs,
+			ExcludeCountries:      options.ExcludeCountries,
+			ExcludeCountryCodes:   options.ExcludeCountryCodes,
+			ExcludeContinents:     options.ExcludeContinents,
+			ExcludeContinentCodes: options.ExcludeContinentCodes,
+			ExcludeASNs:           options.ExcludeASNs,
+			ExcludeNames:          options.ExcludeNames,
+			ExcludeDomains:        options.ExcludeDomains,
 		}
 
 		out := cmd.OutOrStdout()

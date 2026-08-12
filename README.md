@@ -1,7 +1,6 @@
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 [![CI Workflow Status](https://github.com/PugKong/ipinfoq/actions/workflows/ci.yml/badge.svg)](https://github.com/PugKong/ipinfoq/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/PugKong/ipinfoq/badge.svg?branch=main)](https://coveralls.io/github/PugKong/ipinfoq?branch=main)
-[![Go Report Card](https://goreportcard.com/badge/github.com/PugKong/ipinfoq)](https://goreportcard.com/report/github.com/PugKong/ipinfoq)
 [![GitHub Release](https://img.shields.io/github/release/PugKong/ipinfoq.svg?style=flat)](https://github.com/PugKong/ipinfoq/releases/latest)
 
 # ipinfoq

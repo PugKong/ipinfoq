@@ -70,6 +70,8 @@ and --case-insensitive (-i) to ignore letter case.
 
 If --ip is provided, records are matched by whether the given IPs fall within the network range.
 
+Use --merge-cidr option to merge adjacent network ranges, discarding all other data.
+
 Output formats:
 - jsonl (default): one JSON object per line
 - template: use a Go text/template via --template (-t)

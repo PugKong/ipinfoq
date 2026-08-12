@@ -17,6 +17,8 @@ linters:
     - varnamelen
     - wsl
     - wsl_v5
+    - goconst
+    - gomodguard
   settings:
     revive:
       enable-default-rules: true

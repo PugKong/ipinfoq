@@ -6,6 +6,7 @@ import (
 	"iter"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"slices"
@@ -149,7 +150,9 @@ type QueryOptions struct {
 	ExcludeDomains        []string
 }
 
-func (d *DatasetService) Query(options QueryOptions) iter.Seq2[Record, error] {
+type RecordIterator iter.Seq2[Record, error]
+
+func (d *DatasetService) Query(options QueryOptions) RecordIterator {
 	return func(yield func(Record, error) bool) {
 		file, err := os.Open(filepath.Join(d.Dir, datasetFileName))
 		if err != nil {
@@ -262,4 +265,62 @@ func match(options QueryOptions, record Record, network *net.IPNet) bool {
 		notIn(record.ASN, options.ExcludeASNs) &&
 		notIn(record.Name, options.ExcludeNames) &&
 		notIn(record.Domain, options.ExcludeDomains)
+}
+
+func (d *DatasetService) MergeCIDR(iterator RecordIterator) RecordIterator {
+	return func(yield func(Record, error) bool) {
+		prefixes := make([]netip.Prefix, 0)
+		
+		appendPrefix := func(prefix netip.Prefix) {
+			prefixes = append(prefixes, prefix)
+
+			for prevPos, curPos := len(prefixes)-2, len(prefixes)-1; prevPos >= 0; prevPos, curPos = prevPos-1, curPos-1 {
+				prevPrefix := prefixes[prevPos]
+				curPrefix := prefixes[curPos]
+
+				merged, ok := mergePrefixes(prevPrefix, curPrefix)
+				if !ok {
+					break
+				}
+
+				prefixes[prevPos] = merged
+				prefixes = prefixes[:curPos]
+			}
+		}
+
+		for record, err := range iterator {
+			if err != nil {
+				yield(record, err)
+
+				return
+			}
+
+			appendPrefix(netip.MustParsePrefix(record.Network))
+		}
+
+		for _, prefix := range prefixes {
+			record := Record{Network: prefix.String()}
+			if !yield(record, nil) {
+				return
+			}
+		}
+	}
+}
+
+func mergePrefixes(a, b netip.Prefix) (netip.Prefix, bool) {
+	if a == b {
+		return a, true
+	}
+
+	if a.Addr().Is4() != b.Addr().Is4() || a.Bits() != b.Bits() {
+		return netip.Prefix{}, false
+	}
+
+	parentA := netip.PrefixFrom(a.Addr(), a.Bits()-1).Masked()
+	parentB := netip.PrefixFrom(b.Addr(), b.Bits()-1).Masked()
+	if parentA == parentB {
+		return parentA, true
+	}
+
+	return netip.Prefix{}, false
 }

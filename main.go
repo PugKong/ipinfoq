@@ -124,6 +124,8 @@ func NewQueryCommand(service *DatasetService) *cobra.Command {
 		ExcludeASNs           []string
 		ExcludeNames          []string
 		ExcludeDomains        []string
+
+		MergeCIDR bool
 	}
 
 	cmd := &cobra.Command{
@@ -141,6 +143,8 @@ String filters support exact matching by default. Use --contains (-c) to enable 
 and --case-insensitive (-i) to ignore letter case.
 
 If --ip is provided, records are matched by whether the given IPs fall within the network range.
+
+Use --merge-cidr option to merge adjacent network ranges, discarding all other data.
 
 Output formats:
 - jsonl (default): one JSON object per line
@@ -192,6 +196,8 @@ When using --template, the following fields are available:
 	flags.StringSliceVarP(&options.ExcludeNames, "exclude-name", "N", []string{}, "exclude organization names")
 	flags.StringSliceVarP(&options.ExcludeDomains, "exclude-domain", "D", []string{}, "exclude organization domains")
 
+	flags.BoolVar(&options.MergeCIDR, "merge-cidr", false, "merge adjacent network ranges")
+
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error {
 		queryOptions := QueryOptions{
 			Contains:        options.Contains,
@@ -232,7 +238,12 @@ When using --template, the following fields are available:
 			return fmt.Errorf("unknown format %q", options.Format)
 		}
 
-		for record, err := range service.Query(queryOptions) {
+		iterator := service.Query(queryOptions)
+		if options.MergeCIDR {
+			iterator = service.MergeCIDR(iterator)
+		}
+
+		for record, err := range iterator {
 			if err != nil {
 				return fmt.Errorf("read dataset: %w", err)
 			}

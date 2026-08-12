@@ -477,6 +477,47 @@ func TestRunQuery(t *testing.T) {
 		require.Equal(t, 0, exitCode, stderr.String())
 		require.Equal(t, "1.0.0.0/24:Australia:AU:Oceania:OC:AS13335:Cloudflare, Inc.:cloudflare.com", stdout.String())
 	})
+
+	t.Run("cidr merge", func(t *testing.T) {
+		newRawRecord := func(network string) rawRecord {
+			return rawRecord{
+				"network":        network,
+				"country":        "Australia",
+				"country_code":   "AU",
+				"continent":      "Oceania",
+				"continent_code": "OC",
+				"asn":            "AS13335",
+				"as_name":        "Cloudflare, Inc.",
+				"as_domain":      "cloudflare.com",
+			}
+		}
+		dataset := []rawRecord{
+			// 10.0.0.0/24
+			newRawRecord("10.0.0.0/25"),   // 10.0.0.0-10.0.0.127
+			newRawRecord("10.0.0.128/25"), // 10.0.0.128-10.0.0.255
+			// 10.0.12.0/23
+			newRawRecord("10.0.12.0/24"),   // 10.0.12.0-10.0.12.255
+			newRawRecord("10.0.13.0/25"),   // 10.0.13.0-10.0.13.127
+			newRawRecord("10.0.13.128/26"), // 10.0.13.128-10.0.13.191
+			newRawRecord("10.0.13.192/27"), // 10.0.13.192-10.0.13.223
+			newRawRecord("10.0.13.224/27"), // 10.0.13.224-10.0.13.255
+		}
+
+		env, stdout, stderr := newTestEnv(t, []string{
+			"query",
+			"--merge-cidr",
+			"--format",
+			"template",
+			"--template",
+			"{{.Network}}\n",
+		})
+		writeDataset(t, env, dataset)
+
+		exitCode := Run(env)
+
+		require.Equal(t, 0, exitCode, stderr.String())
+		require.Equal(t, "10.0.0.0/24\n10.0.12.0/23\n", stdout.String())
+	})
 }
 
 type rawRecord map[string]string

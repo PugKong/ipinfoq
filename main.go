@@ -59,6 +59,7 @@ func Run(env *Env) int {
 	cmd.AddCommand(
 		NewDownloadCommand(datasetService),
 		NewQueryCommand(datasetService),
+		NewVersionCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
@@ -257,4 +258,24 @@ When using --template, the following fields are available:
 	}
 
 	return cmd
+}
+
+//nolint:gochecknoglobals
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
+func NewVersionCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "version",
+		Short: "Show version",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			cmd.Println(appName, version, commit, date)
+
+			return nil
+		},
+	}
 }

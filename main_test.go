@@ -606,3 +606,12 @@ func parseJSONL(t *testing.T, r io.Reader) []rawRecord {
 
 	return records
 }
+
+func TestRunVersion(t *testing.T) {
+	env, stdout, stderr := newTestEnv(t, []string{"version"})
+
+	exitCode := Run(env)
+
+	require.Equal(t, 0, exitCode, stderr.String())
+	require.Equal(t, "ipinfoq dev none unknown\n", stdout.String())
+}

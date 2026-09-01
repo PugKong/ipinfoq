@@ -118,6 +118,7 @@ Flags:
   -f, --format string                    output format (jsonl, template) (default "jsonl")
   -h, --help                             help for query
       --ip ipSlice                       include IPs (default [])
+      --merge-cidr                       merge adjacent network ranges
   -n, --name strings                     include organization names
   -t, --template string                  go text/template in case of "template" format
 ```

@@ -1,5 +1,6 @@
-name: Local
+name: LOCAL
 color: "#8D44B2"
 variables:
   - secret: true
     name: TOKEN
+    description: ""

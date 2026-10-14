@@ -45,11 +45,10 @@ Usage:
   ipinfoq download [flags]
 
 Examples:
-  ipinfoq download -t "$IPINFOQ_TOKEN" --ipv 4
+  ipinfoq download -t "$IPINFOQ_TOKEN"
 
 Flags:
   -h, --help           help for download
-      --ipv string     ip version (4 or 6)
   -t, --token string   api token (required)
 ```
 

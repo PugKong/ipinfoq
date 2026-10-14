@@ -41,7 +41,6 @@ func NewDatasetService(url, dir string) *DatasetService {
 
 type DownloadOptions struct {
 	Token string
-	IPv   string
 }
 
 func (d *DatasetService) Download(options DownloadOptions) error {
@@ -68,7 +67,7 @@ func (d *DatasetService) Download(options DownloadOptions) error {
 
 	filePath := filepath.Join(d.Dir, datasetFileName)
 	tmpFilePath := filePath + ".tmp"
-	if err := saveDataset(options, tmpFilePath, resp.Body); err != nil {
+	if err := saveDataset(tmpFilePath, resp.Body); err != nil {
 		_ = os.Remove(tmpFilePath)
 
 		return err
@@ -81,7 +80,7 @@ func (d *DatasetService) Download(options DownloadOptions) error {
 	return nil
 }
 
-func saveDataset(options DownloadOptions, to string, r io.Reader) error {
+func saveDataset(to string, r io.Reader) error {
 	file, err := os.Create(to)
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
@@ -105,10 +104,6 @@ func saveDataset(options DownloadOptions, to string, r io.Reader) error {
 		version := "4"
 		if strings.Contains(record.Network, ":") {
 			version = "6"
-		}
-
-		if options.IPv != "" && options.IPv != version {
-			continue
 		}
 
 		if version == "4" && !strings.Contains(record.Network, "/") {

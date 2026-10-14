@@ -75,70 +75,40 @@ func TestRunDownload(t *testing.T) {
 		return updated
 	}
 
-	tests := map[string]struct {
-		Args    []string
-		Token   string
-		Records []rawRecord
-	}{
-		"all": {
-			Args:  []string{"download", "--token", "foo"},
-			Token: "foo",
-			Records: []rawRecord{
-				dataset[0],
-				dataset[1],
-				withNetwork(dataset[2], "1.0.0.1/32"),
-				withNetwork(dataset[3], "2001:200:901:5d2f::2/128"),
-			},
-		},
-		"ipv4": {
-			Args:  []string{"download", "--token", "bar", "--ipv", "4"},
-			Token: "bar",
-			Records: []rawRecord{
-				dataset[0],
-				withNetwork(dataset[2], "1.0.0.1/32"),
-			},
-		},
-		"ipv6": {
-			Args:  []string{"download", "--token", "foo", "--ipv", "6"},
-			Token: "foo",
-			Records: []rawRecord{
-				dataset[1],
-				withNetwork(dataset[3], "2001:200:901:5d2f::2/128"),
-			},
-		},
+	expectedRecords := []rawRecord{
+		dataset[0],
+		dataset[1],
+		withNetwork(dataset[2], "1.0.0.1/32"),
+		withNetwork(dataset[3], "2001:200:901:5d2f::2/128"),
 	}
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Header.Get("Authorization") != "Bearer "+test.Token {
-					w.WriteHeader(http.StatusUnauthorized)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer foo" {
+			w.WriteHeader(http.StatusUnauthorized)
 
-					return
-				}
+			return
+		}
 
-				gzw := gzip.NewWriter(w)
-				defer func() { _ = gzw.Close() }()
+		gzw := gzip.NewWriter(w)
+		defer func() { _ = gzw.Close() }()
 
-				encoder := json.NewEncoder(gzw)
-				for _, record := range dataset {
-					_ = encoder.Encode(record)
-				}
-			}))
-			defer server.Close()
+		encoder := json.NewEncoder(gzw)
+		for _, record := range dataset {
+			_ = encoder.Encode(record)
+		}
+	}))
+	defer server.Close()
 
-			env, stdout, stderr := newTestEnv(t, test.Args)
-			env.URL = server.URL
+	env, stdout, stderr := newTestEnv(t, []string{"download", "--token", "foo"})
+	env.URL = server.URL
 
-			exitCode := Run(env)
+	exitCode := Run(env)
 
-			require.Equal(t, 0, exitCode, stderr.String())
-			require.Empty(t, stdout.String())
+	require.Equal(t, 0, exitCode, stderr.String())
+	require.Empty(t, stdout.String())
 
-			records := readDataset(t, env)
-			require.Equal(t, test.Records, records)
-		})
-	}
+	records := readDataset(t, env)
+	require.Equal(t, expectedRecords, records)
 }
 
 func TestRunQuery(t *testing.T) {

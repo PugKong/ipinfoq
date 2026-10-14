@@ -72,26 +72,23 @@ func Run(env *Env) int {
 func NewDownloadCommand(service *DatasetService) *cobra.Command {
 	var options struct {
 		Token string
-		IPv   string
 	}
 
 	cmd := &cobra.Command{
 		Use:     "download",
 		Short:   "Download the dataset",
-		Example: "  ipinfoq download -t \"$IPINFOQ_TOKEN\" --ipv 4",
+		Example: "  ipinfoq download -t \"$IPINFOQ_TOKEN\"",
 		Args:    cobra.ExactArgs(0),
 	}
 
 	flags := cmd.Flags()
 	flags.StringVarP(&options.Token, "token", "t", "", "api token (required)")
-	flags.StringVar(&options.IPv, "ipv", "", "ip version (4 or 6)")
 
 	_ = cmd.MarkFlagRequired("token")
 
 	cmd.RunE = func(*cobra.Command, []string) error {
 		downloadOptions := DownloadOptions{
 			Token: options.Token,
-			IPv:   options.IPv,
 		}
 
 		return service.Download(downloadOptions)

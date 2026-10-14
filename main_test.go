@@ -557,6 +557,65 @@ func TestRunQuery(t *testing.T) {
 		require.Equal(t, 0, exitCode, stderr.String())
 		require.Equal(t, "10.0.0.0/24\n10.0.12.0/23\n", stdout.String())
 	})
+
+	t.Run("ip version", func(t *testing.T) {
+		dataset := []rawRecord{
+			{
+				"network":        "192.0.2.0/32",
+				"country":        "Australia",
+				"country_code":   "AU",
+				"continent":      "Oceania",
+				"continent_code": "OC",
+				"asn":            "AS13335",
+				"as_name":        "Cloudflare, Inc.",
+				"as_domain":      "cloudflare.com",
+			},
+			{
+				"network":        "2001:db8::/128",
+				"country":        "Australia",
+				"country_code":   "AU",
+				"continent":      "Oceania",
+				"continent_code": "OC",
+				"asn":            "AS13335",
+				"as_name":        "Cloudflare, Inc.",
+				"as_domain":      "cloudflare.com",
+			},
+		}
+
+		tests := map[string]struct {
+			Args    []string
+			Records []rawRecord
+		}{
+			"all": {
+				Args:    []string{"query"},
+				Records: dataset,
+			},
+			"empty ipv": {
+				Args:    []string{"query", "--ipv", ""},
+				Records: dataset,
+			},
+			"ipv4": {
+				Args:    []string{"query", "--ipv", "4"},
+				Records: []rawRecord{dataset[0]},
+			},
+			"ipv6": {
+				Args:    []string{"query", "--ipv", "6"},
+				Records: []rawRecord{dataset[1]},
+			},
+		}
+
+		for name, test := range tests {
+			t.Run(name, func(t *testing.T) {
+				env, stdout, stderr := newTestEnv(t, test.Args)
+				writeDataset(t, env, dataset)
+
+				exitCode := Run(env)
+
+				require.Equal(t, 0, exitCode, stderr.String())
+				require.Equal(t, test.Records, parseJSONL(t, stdout))
+			})
+		}
+	})
 }
 
 type rawRecord map[string]string

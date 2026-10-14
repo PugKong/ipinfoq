@@ -108,6 +108,7 @@ func NewQueryCommand(service *DatasetService) *cobra.Command {
 		Contains        bool
 		CaseInsensitive bool
 
+		IPv            string
 		IPs            []net.IP
 		Countries      []string
 		CountryCodes   []string
@@ -145,6 +146,9 @@ and --case-insensitive (-i) to ignore letter case.
 
 If --ip is provided, records are matched by whether the given IPs fall within the network range.
 
+Use --ipv 4 or --ipv 6 to limit results to one IP version.
+Both versions are included when --ipv is omitted or empty.
+
 Use --merge-cidr option to merge adjacent network ranges, discarding all other data.
 
 Output formats:
@@ -163,6 +167,8 @@ When using --template, the following fields are available:
 `,
 		Example: `  - Search information about a company by its name
     ipinfoq query -ci -n "telegram" | jq
+  - Query IPv6 networks
+    ipinfoq query --ipv 6
   - Generate an ipset config to block Telegram by domain
     ipinfoq query -f template -t '{{ printf "add block_net_set %s\\n" .Network }}' -d "telegram.org" > telegram.conf
   - Inspect domain data using dig
@@ -179,6 +185,7 @@ When using --template, the following fields are available:
 	flags.BoolVarP(&options.Contains, "contains", "c", false, "substring matching")
 	flags.BoolVarP(&options.CaseInsensitive, "case-insensitive", "i", false, "case insensitive search")
 
+	flags.StringVar(&options.IPv, "ipv", "", "ip version (4 or 6)")
 	flags.IPSliceVar(&options.IPs, "ip", []net.IP{}, "include IPs")
 	flags.StringSliceVar(&options.Countries, "country", []string{}, "include countries")
 	flags.StringSliceVar(&options.CountryCodes, "country-code", []string{}, "include country codes")
@@ -200,10 +207,15 @@ When using --template, the following fields are available:
 	flags.BoolVar(&options.MergeCIDR, "merge-cidr", false, "merge adjacent network ranges")
 
 	cmd.RunE = func(cmd *cobra.Command, _ []string) error {
+		if options.IPv != "" && options.IPv != "4" && options.IPv != "6" {
+			return fmt.Errorf("invalid IP version %q: expected empty, 4 or 6", options.IPv)
+		}
+
 		queryOptions := QueryOptions{
 			Contains:        options.Contains,
 			CaseInsensitive: options.CaseInsensitive,
 
+			IPv:            options.IPv,
 			IPs:            options.IPs,
 			Countries:      options.Countries,
 			CountryCodes:   options.CountryCodes,

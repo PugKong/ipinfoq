@@ -70,6 +70,9 @@ and --case-insensitive (-i) to ignore letter case.
 
 If --ip is provided, records are matched by whether the given IPs fall within the network range.
 
+Use --ipv 4 or --ipv 6 to limit results to one IP version.
+Both versions are included when --ipv is omitted or empty.
+
 Use --merge-cidr option to merge adjacent network ranges, discarding all other data.
 
 Output formats:
@@ -92,6 +95,8 @@ Usage:
 Examples:
   - Search information about a company by its name
     ipinfoq query -ci -n "telegram" | jq
+  - Query IPv6 networks
+    ipinfoq query --ipv 6
   - Generate an ipset config to block Telegram by domain
     ipinfoq query -f template -t '{{ printf "add block_net_set %s\\n" .Network }}' -d "telegram.org" > telegram.conf
   - Inspect domain data using dig
@@ -118,6 +123,7 @@ Flags:
   -f, --format string                    output format (jsonl, template) (default "jsonl")
   -h, --help                             help for query
       --ip ipSlice                       include IPs (default [])
+      --ipv string                       ip version (4 or 6)
       --merge-cidr                       merge adjacent network ranges
   -n, --name strings                     include organization names
   -t, --template string                  go text/template in case of "template" format

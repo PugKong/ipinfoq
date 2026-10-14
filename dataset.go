@@ -135,6 +135,7 @@ type QueryOptions struct {
 	Contains        bool
 	CaseInsensitive bool
 
+	IPv            string
 	IPs            []net.IP
 	Countries      []string
 	CountryCodes   []string
@@ -224,6 +225,15 @@ func (d *DatasetService) Query(options QueryOptions) RecordIterator {
 }
 
 func match(options QueryOptions, record Record, network *net.IPNet) bool {
+	version := "4"
+	if strings.Contains(record.Network, ":") {
+		version = "6"
+	}
+
+	if options.IPv != "" && options.IPv != version {
+		return false
+	}
+
 	compareNetwork := func(ip net.IP) bool { return network.Contains(ip) }
 	if len(options.IPs) > 0 && !slices.ContainsFunc(options.IPs, compareNetwork) {
 		return false

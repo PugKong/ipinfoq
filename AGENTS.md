@@ -42,3 +42,5 @@ Use short, imperative commit subjects, matching history: `Add version command` o
 ## Security & Configuration
 
 Pass tokens through `--token`, for example `go run . download -t "$IPINFOQ_TOKEN"`. Keep credentials and downloaded datasets out of commits. Data is cached under `os.UserCacheDir()/ipinfoq/ipinfo_lite.gz`.
+
+Downloads retain both IP versions; `query --ipv` filters results. The API's `Expires` timestamp is stored in the gzip header's comment. An unexpired timestamp makes `download` succeed silently without an HTTP request; expired, missing, or invalid expiration metadata triggers a new download.

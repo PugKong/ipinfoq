@@ -115,6 +115,10 @@ func saveDataset(options DownloadOptions, to string, r io.Reader) error {
 			record.Network += "/32"
 		}
 
+		if version == "6" && !strings.Contains(record.Network, "/") {
+			record.Network += "/128"
+		}
+
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("write record: %w", err)
 		}
@@ -270,7 +274,7 @@ func match(options QueryOptions, record Record, network *net.IPNet) bool {
 func (d *DatasetService) MergeCIDR(iterator RecordIterator) RecordIterator {
 	return func(yield func(Record, error) bool) {
 		prefixes := make([]netip.Prefix, 0)
-		
+
 		appendPrefix := func(prefix netip.Prefix) {
 			prefixes = append(prefixes, prefix)
 

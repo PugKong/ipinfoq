@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -45,6 +46,33 @@ func TestRunDownload(t *testing.T) {
 			"as_name":        "Cloudflare London, LLC",
 			"as_domain":      "cloudflare.com",
 		},
+		{
+			"network":        "1.0.0.1",
+			"country":        "Australia",
+			"country_code":   "AU",
+			"continent":      "Oceania",
+			"continent_code": "OC",
+			"asn":            "AS13335",
+			"as_name":        "Cloudflare, Inc.",
+			"as_domain":      "cloudflare.com",
+		},
+		{
+			"network":        "2001:200:901:5d2f::2",
+			"country":        "United States",
+			"country_code":   "US",
+			"continent":      "North America",
+			"continent_code": "NA",
+			"asn":            "AS209242",
+			"as_name":        "Cloudflare London, LLC",
+			"as_domain":      "cloudflare.com",
+		},
+	}
+
+	withNetwork := func(record rawRecord, network string) rawRecord {
+		updated := maps.Clone(record)
+		updated["network"] = network
+
+		return updated
 	}
 
 	tests := map[string]struct {
@@ -53,19 +81,30 @@ func TestRunDownload(t *testing.T) {
 		Records []rawRecord
 	}{
 		"all": {
-			Args:    []string{"download", "--token", "foo"},
-			Token:   "foo",
-			Records: []rawRecord{dataset[0], dataset[1]},
+			Args:  []string{"download", "--token", "foo"},
+			Token: "foo",
+			Records: []rawRecord{
+				dataset[0],
+				dataset[1],
+				withNetwork(dataset[2], "1.0.0.1/32"),
+				withNetwork(dataset[3], "2001:200:901:5d2f::2/128"),
+			},
 		},
 		"ipv4": {
-			Args:    []string{"download", "--token", "bar", "--ipv", "4"},
-			Token:   "bar",
-			Records: []rawRecord{dataset[0]},
+			Args:  []string{"download", "--token", "bar", "--ipv", "4"},
+			Token: "bar",
+			Records: []rawRecord{
+				dataset[0],
+				withNetwork(dataset[2], "1.0.0.1/32"),
+			},
 		},
 		"ipv6": {
-			Args:    []string{"download", "--token", "foo", "--ipv", "6"},
-			Token:   "foo",
-			Records: []rawRecord{dataset[1]},
+			Args:  []string{"download", "--token", "foo", "--ipv", "6"},
+			Token: "foo",
+			Records: []rawRecord{
+				dataset[1],
+				withNetwork(dataset[3], "2001:200:901:5d2f::2/128"),
+			},
 		},
 	}
 

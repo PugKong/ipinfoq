@@ -13,7 +13,7 @@
 
 ## Build, Test, and Development Commands
 
-Use Go 1.26.1 or later, matching `go.mod`.
+Use Go 1.27.2 or later, matching `go.mod`.
 
 - `go build -o ipinfoq .`: build the local binary.
 - `go run . --help`: inspect commands without installing.

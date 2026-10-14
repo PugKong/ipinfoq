@@ -11,7 +11,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -82,13 +84,17 @@ func TestRunDownload(t *testing.T) {
 		withNetwork(dataset[3], "2001:200:901:5d2f::2/128"),
 	}
 
+	var requests atomic.Int64
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+
 		if r.Header.Get("Authorization") != "Bearer foo" {
 			w.WriteHeader(http.StatusUnauthorized)
 
 			return
 		}
 
+		w.Header().Set("Expires", time.Now().Add(24*time.Hour).UTC().Format(http.TimeFormat))
 		gzw := gzip.NewWriter(w)
 		defer func() { _ = gzw.Close() }()
 
@@ -106,9 +112,19 @@ func TestRunDownload(t *testing.T) {
 
 	require.Equal(t, 0, exitCode, stderr.String())
 	require.Empty(t, stdout.String())
+	require.Empty(t, stderr.String())
+	require.Equal(t, int64(1), requests.Load())
 
 	records := readDataset(t, env)
 	require.Equal(t, expectedRecords, records)
+
+	// A second download should use the fresh cache without making another HTTP request.
+	cacheExitCode := Run(env)
+
+	require.Equal(t, 0, cacheExitCode, stderr.String())
+	require.Empty(t, stdout.String())
+	require.Empty(t, stderr.String())
+	require.Equal(t, int64(1), requests.Load())
 }
 
 func TestRunQuery(t *testing.T) {

@@ -52,6 +52,11 @@ Flags:
   -t, --token string   api token (required)
 ```
 
+The download command caches the API's `Expires` header with the dataset. Until
+that time, subsequent downloads exit successfully without output or an HTTP
+request. Once expired, or if the header is missing or invalid, the dataset is
+downloaded again.
+
 Query it
 
 ```

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"fmt"
 	"io"
 	"iter"
@@ -43,7 +44,15 @@ type DownloadOptions struct {
 	Token string
 }
 
+// Download saves the dataset unless the cached copy has an unexpired Expires header.
+// Missing or invalid expiration metadata triggers a download. Request and file errors
+// are returned without replacing the cached dataset.
 func (d *DatasetService) Download(options DownloadOptions) error {
+	filePath := filepath.Join(d.Dir, datasetFileName)
+	if isDatasetFresh(filePath) {
+		return nil
+	}
+
 	if err := os.MkdirAll(d.Dir, 0750); err != nil {
 		return fmt.Errorf("create dataset dir: %w", err)
 	}
@@ -65,9 +74,10 @@ func (d *DatasetService) Download(options DownloadOptions) error {
 		return fmt.Errorf("unexpected HTTP status: %s", resp.Status)
 	}
 
-	filePath := filepath.Join(d.Dir, datasetFileName)
+	expires, _ := http.ParseTime(resp.Header.Get("Expires"))
+
 	tmpFilePath := filePath + ".tmp"
-	if err := saveDataset(tmpFilePath, resp.Body); err != nil {
+	if err := saveDataset(tmpFilePath, resp.Body, expires); err != nil {
 		_ = os.Remove(tmpFilePath)
 
 		return err
@@ -80,7 +90,25 @@ func (d *DatasetService) Download(options DownloadOptions) error {
 	return nil
 }
 
-func saveDataset(to string, r io.Reader) error {
+func isDatasetFresh(datasetPath string) bool {
+	file, err := os.Open(datasetPath)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = file.Close() }()
+
+	reader, err := gzip.NewReader(file)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = reader.Close() }()
+
+	expires, err := http.ParseTime(reader.Comment)
+
+	return err == nil && time.Now().Before(expires)
+}
+
+func saveDataset(to string, r io.Reader, expires time.Time) error {
 	file, err := os.Create(to)
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
@@ -89,6 +117,11 @@ func saveDataset(to string, r io.Reader) error {
 
 	writer := NewGzipJSONWriter[Record](file)
 	defer func() { _ = writer.Close() }()
+
+	// Keep expiration metadata in the gzip header so it is replaced with the dataset.
+	if !expires.IsZero() {
+		writer.gzw.Comment = expires.UTC().Format(http.TimeFormat)
+	}
 
 	reader, err := NewGzipJSONReader[Record](r)
 	if err != nil {
